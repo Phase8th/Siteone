@@ -35,6 +35,12 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
+      - name: List tests (shard 1/2)
+        run: npx playwright test --list --shard=1/2 | cat
+
+      - name: List tests (shard 2/2)
+        run: npx playwright test --list --shard=2/2 | cat
+
       - name: Run tests (shard 1/2)
         run: |
           rm -rf ./allure-results-shard1
