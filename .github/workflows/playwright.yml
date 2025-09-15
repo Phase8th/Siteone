@@ -3,14 +3,17 @@ name: Playwright Tests + Allure Report
 on:
   push:
     branches: [ main ]
-  pull_request:
-    branches: [ main ]
+
+permissions:
+  contents: write  # ← даём право на запись
 
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -35,6 +38,7 @@ jobs:
         run: |
           mkdir -p docs
           cp -r allure-report/* docs/
+          touch docs/.nojekyll
 
       - name: Commit and Push Allure Report
         run: |
@@ -43,7 +47,6 @@ jobs:
           git add docs/
           git commit -m "Update Allure report" || echo "No changes to commit"
           git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
-          git push
 
       - name: Upload Allure Report as Artifact
         uses: actions/upload-artifact@v4
