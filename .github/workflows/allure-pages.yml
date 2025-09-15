@@ -58,6 +58,9 @@ jobs:
           elif [ "${RUN_VISUAL}" = "true" ]; then
             echo "Running visual tests without updating snapshots...";
             npx playwright test --grep @visual;
+          elif [ "${GITHUB_REF}" = "refs/heads/main" ]; then
+            echo "Main branch: running full suite including visual tests...";
+            npx playwright test;
           else
             npx playwright test --grep-invert @visual;
           fi
