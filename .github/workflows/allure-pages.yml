@@ -53,7 +53,8 @@ jobs:
       - name: Run tests
         run: |
           if [ "${UPDATE_SNAPSHOTS}" = "true" ]; then
-            echo "Updating visual snapshots only (override reporter to avoid Allure attachments)...";
+            echo "Clean old visual baselines and regenerate...";
+            rm -rf tests/*-snapshots || true
             npx playwright test --grep @visual --update-snapshots --reporter=line;
           else
             echo "Running all tests...";
@@ -70,10 +71,9 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
-          files=$(find tests -type f -path '*-snapshots/*.png')
-          if [ -n "${files}" ]; then
-            echo "Staging snapshot files:" ${files}
-            git add ${files}
+          if ls tests/*-snapshots/*.png 1> /dev/null 2>&1; then
+            echo "Staging snapshot changes (adds/modifications/deletions) under tests/";
+            git add -A tests
             git commit -m "chore: update visual snapshots" || echo "No snapshot changes"
             git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
           else
