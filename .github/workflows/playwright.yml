@@ -17,7 +17,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm install --no-audit --no-fund
@@ -25,8 +26,11 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps
 
-      - name: Run Playwright tests
-        run: npx playwright test
+      - name: Run Playwright tests (shard 1/2)
+        run: npx playwright test --shard=1/2
+
+      - name: Run Playwright tests (shard 2/2)
+        run: npx playwright test --shard=2/2
 
       - name: Generate Allure Report
         run: |
