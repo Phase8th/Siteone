@@ -35,25 +35,12 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: List tests (shard 1/2)
-        run: npx playwright test --list --shard=1/2 | cat
-
-      - name: List tests (shard 2/2)
-        run: npx playwright test --list --shard=2/2 | cat
-
-      - name: Run tests (shard 1/2)
-        run: |
-          rm -rf ./allure-results-shard1
-          ALLURE_RESULTS_DIR=./allure-results-shard1 npx playwright test --shard=1/2
-
-      - name: Run tests (shard 2/2)
-        run: |
-          rm -rf ./allure-results-shard2
-          ALLURE_RESULTS_DIR=./allure-results-shard2 npx playwright test --shard=2/2
+      - name: Run tests
+        run: npm run test
 
       - name: Generate Allure static site
         run: |
-          npx allure generate ./allure-results-shard1 ./allure-results-shard2 --clean -o ./docs
+          npm run allure:generate
           touch ./docs/.nojekyll
 
       - name: Upload Pages artifact
