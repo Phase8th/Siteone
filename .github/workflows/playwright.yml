@@ -1,8 +1,7 @@
 name: Playwright Tests + Allure Report
 
 on:
-  push:
-    branches: [ main ]
+  workflow_dispatch:
 
 permissions:
   contents: write  # ← даём право на запись
