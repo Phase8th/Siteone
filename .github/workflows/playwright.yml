@@ -42,6 +42,7 @@ jobs:
           git config --global user.email "actions@github.com"
           git add docs/
           git commit -m "Update Allure report" || echo "No changes to commit"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
           git push
 
       - name: Upload Allure Report as Artifact
