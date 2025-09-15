@@ -14,7 +14,7 @@ async function disableAnimations(page) {
 	});
 }
 
-test.describe('Visual regression', () => {
+test.describe('@visual Visual regression', () => {
 	test.beforeEach(async ({ page }) => {
 		await page.goto('https://playwright.dev/');
 		await disableAnimations(page);
