@@ -87,12 +87,12 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: chore: update visual snapshots
-          title: chore: update visual snapshots
+          commit-message: "chore: update visual snapshots"
+          title: "chore: update visual snapshots"
           body: Automated update of visual baseline images
           branch: update/visual-snapshots
           add-paths: |
-            tests/**/-snapshots/*.png
+            tests/**/*-snapshots/*.png
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
