@@ -56,13 +56,8 @@ jobs:
             echo "Updating visual snapshots...";
             npx playwright test --grep @visual --update-snapshots;
           elif [ "${RUN_VISUAL}" = "true" ]; then
-            echo "Running visual tests without updating snapshots...";
-            if ls tests/*-snapshots/*.png 1> /dev/null 2>&1; then
-              npx playwright test --grep @visual;
-            else
-              echo "No visual baselines found. Bootstrapping snapshots for this run (no commit).";
-              npx playwright test --grep @visual --update-snapshots;
-            fi
+            echo "Running visual tests on CI with --update-snapshots to ensure baselines exist (no commit).";
+            npx playwright test --grep @visual --update-snapshots;
           else
             npx playwright test --grep-invert @visual;
           fi
