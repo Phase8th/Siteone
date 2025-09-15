@@ -4,7 +4,14 @@ on:
   push:
     branches:
       - main
+      - tests/dev
   workflow_dispatch:
+    inputs:
+      update_snapshots:
+        description: "Update visual snapshots (toHaveScreenshot baselines)"
+        type: boolean
+        default: false
+        required: false
 
 permissions:
   contents: read
@@ -19,6 +26,8 @@ jobs:
   test-and-build:
     name: Run Playwright and build Allure
     runs-on: ubuntu-latest
+    env:
+      UPDATE_SNAPSHOTS: ${{ inputs.update_snapshots || 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -36,12 +45,27 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run tests
-        run: npm run test
+        run: |
+          if [ "${UPDATE_SNAPSHOTS}" = "true" ]; then
+            echo "Updating visual snapshots...";
+            npx playwright test --update-snapshots;
+          else
+            npm run test;
+          fi
 
       - name: Generate Allure static site
         run: |
           npm run allure:generate
           touch ./docs/.nojekyll
+
+      - name: Commit updated visual snapshots
+        if: ${{ inputs.update_snapshots == true && github.ref == 'refs/heads/main' }}
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add "tests/**/*-snapshots/*.png"
+          git commit -m "chore: update visual snapshots" || echo "No snapshot changes"
+          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
@@ -50,6 +74,7 @@ jobs:
 
   deploy:
     needs: test-and-build
+    if: ${{ github.ref == 'refs/heads/main' }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
