@@ -12,6 +12,11 @@ on:
         type: boolean
         default: false
         required: false
+      run_visual:
+        description: "Include visual tests (@visual) without updating snapshots"
+        type: boolean
+        default: false
+        required: false
 
 permissions:
   contents: read
@@ -28,6 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       UPDATE_SNAPSHOTS: ${{ inputs.update_snapshots || 'false' }}
+      RUN_VISUAL: ${{ inputs.run_visual || 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -49,6 +55,9 @@ jobs:
           if [ "${UPDATE_SNAPSHOTS}" = "true" ]; then
             echo "Updating visual snapshots...";
             npx playwright test --grep @visual --update-snapshots;
+          elif [ "${RUN_VISUAL}" = "true" ]; then
+            echo "Running visual tests without updating snapshots...";
+            npx playwright test --grep @visual;
           else
             npx playwright test --grep-invert @visual;
           fi
