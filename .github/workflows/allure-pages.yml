@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - tests/dev
   workflow_dispatch:
     inputs:
       update_snapshots:
