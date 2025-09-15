@@ -19,7 +19,7 @@ on:
         required: false
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -67,7 +67,7 @@ jobs:
           npm run allure:generate
           touch ./docs/.nojekyll
 
-      - name: Commit updated visual snapshots
+      - name: Prepare updated visual snapshots
         if: ${{ inputs.update_snapshots == true && github.ref == 'refs/heads/main' }}
         run: |
           git config --global user.name "github-actions"
@@ -81,6 +81,18 @@ jobs:
           else
             echo "No snapshot files to commit"
           fi
+
+      - name: Create PR with updated snapshots
+        if: ${{ inputs.update_snapshots == true && github.ref == 'refs/heads/main' }}
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore: update visual snapshots"
+          title: "chore: update visual snapshots"
+          body: Automated update of visual baseline images
+          branch: update/visual-snapshots
+          add-paths: |
+            tests/**/*-snapshots/*.png
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
