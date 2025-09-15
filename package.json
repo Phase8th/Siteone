@@ -3,7 +3,12 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "scripts": {},
+  "scripts": {
+    "test": "playwright test",
+    "allure:generate": "allure generate ./allure-results --clean -o ./docs",
+    "allure:open": "allure open ./docs",
+    "report:allure": "npm run test && npm run allure:generate"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
@@ -12,7 +17,8 @@
     "@faker-js/faker": "^10.0.0",
     "@playwright/test": "^1.55.0",
     "@types/node": "^24.3.1",
-    "allure-playwright": "^3.4.1"
+    "allure-playwright": "^3.4.1",
+    "allure-commandline": "^2.29.0"
   },
   "dependencies": {
     "csv-parse": "^6.1.0",
