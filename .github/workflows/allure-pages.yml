@@ -57,8 +57,8 @@ jobs:
             rm -rf tests/*-snapshots || true
             npx playwright test --grep @visual --update-snapshots --reporter=line;
           else
-            echo "Running all tests...";
-            npx playwright test;
+            echo "Running all non-visual tests...";
+            npx playwright test --grep-invert @visual;
           fi
 
       - name: Generate Allure static site
