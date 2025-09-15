@@ -75,9 +75,15 @@ jobs:
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
-          git add "tests/**/*-snapshots/*.png"
-          git commit -m "chore: update visual snapshots" || echo "No snapshot changes"
-          git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
+          files=$(find tests -type f -path '*-snapshots/*.png')
+          if [ -n "${files}" ]; then
+            echo "Staging snapshot files:" ${files}
+            git add ${files}
+            git commit -m "chore: update visual snapshots" || echo "No snapshot changes"
+            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
+          else
+            echo "No snapshot files to commit"
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
