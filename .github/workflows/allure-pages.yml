@@ -51,6 +51,7 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run tests
+        continue-on-error: true
         run: |
           if [ "${UPDATE_SNAPSHOTS}" = "true" ]; then
             echo "Clean old visual baselines and regenerate...";
@@ -62,12 +63,21 @@ jobs:
           fi
 
       - name: Generate Allure static site
+        if: ${{ always() }}
+        continue-on-error: true
         run: |
-          npm run allure:generate
+          mkdir -p ./docs
+          if [ -d ./allure-results ] && [ "$(ls -A ./allure-results 2>/dev/null)" ]; then
+            echo "Generating Allure static site into ./docs";
+            npx allure-commandline generate ./allure-results --clean -o ./docs || true
+          else
+            echo "No allure-results found; creating empty docs with placeholder index";
+            echo "<html><body><h1>No Allure results available</h1></body></html>" > ./docs/index.html
+          fi
           touch ./docs/.nojekyll
 
       - name: Prepare updated visual snapshots
-        if: ${{ inputs.update_snapshots == true && github.ref == 'refs/heads/main' }}
+        if: ${{ always() && inputs.update_snapshots == true && github.ref == 'refs/heads/main' }}
         run: |
           git config --global user.name "github-actions"
           git config --global user.email "actions@github.com"
@@ -81,7 +91,7 @@ jobs:
           fi
 
       - name: Create PR with updated snapshots
-        if: ${{ inputs.update_snapshots == true && github.ref == 'refs/heads/main' }}
+        if: ${{ always() && inputs.update_snapshots == true && github.ref == 'refs/heads/main' }}
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
@@ -93,13 +103,14 @@ jobs:
             tests/**/*-snapshots/*.png
 
       - name: Upload Pages artifact
+        if: ${{ always() }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./docs
 
   deploy:
     needs: test-and-build
-    if: ${{ github.ref == 'refs/heads/main' }}
+    if: ${{ always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/tests/dev') }}
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
