@@ -28,9 +28,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test-and-build:
-    name: Run Playwright and build Allure
+  test:
+    name: Run tests on ${{ matrix.browser }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        browser: [chromium, firefox, webkit]
     env:
       UPDATE_SNAPSHOTS: ${{ inputs.update_snapshots || 'false' }}
       RUN_VISUAL: ${{ inputs.run_visual || 'false' }}
@@ -50,21 +54,73 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps
 
-      - name: Run tests
+      - name: Run tests (${{ matrix.browser }})
         continue-on-error: true
         run: |
           if [ "${UPDATE_SNAPSHOTS}" = "true" ]; then
-            echo "Clean old visual baselines and regenerate...";
+            echo "Clean old visual baselines and regenerate for ${{ matrix.browser }}...";
             rm -rf tests/*-snapshots || true
-            npx playwright test --grep @visual --update-snapshots --reporter=line;
+            npx playwright test --project=${{ matrix.browser }} --grep @visual --update-snapshots --reporter=line;
           else
-            echo "Running all non-visual tests...";
-            npx playwright test --grep-invert @visual;
+            if [ "${RUN_VISUAL}" = "true" ]; then
+              echo "Running visual tests for ${{ matrix.browser }}...";
+              npx playwright test --project=${{ matrix.browser }} --grep @visual;
+            else
+              echo "Running non-visual tests for ${{ matrix.browser }}...";
+              npx playwright test --project=${{ matrix.browser }} --grep-invert @visual;
+            fi
           fi
+
+      - name: Upload allure-results (${{ matrix.browser }})
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-${{ matrix.browser }}
+          path: allure-results
+          if-no-files-found: ignore
+
+  merge-and-deploy:
+    name: Merge Allure results and deploy Pages
+    needs: test
+    runs-on: ubuntu-latest
+    if: ${{ always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/tests/dev') }}
+    steps:
+      - name: Download allure results (chromium)
+        if: ${{ always() }}
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-chromium
+          path: ./allure-merged/chromium
+
+      - name: Download allure results (firefox)
+        if: ${{ always() }}
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-firefox
+          path: ./allure-merged/firefox
+
+      - name: Download allure results (webkit)
+        if: ${{ always() }}
+        uses: actions/download-artifact@v4
+        with:
+          name: allure-results-webkit
+          path: ./allure-merged/webkit
+
+      - name: Merge allure result folders
+        if: ${{ always() }}
+        run: |
+          mkdir -p ./allure-results
+          for d in ./allure-merged/*; do
+            if [ -d "$d" ]; then
+              echo "Merging $d";
+              cp -r "$d"/* ./allure-results/ 2>/dev/null || true
+            fi
+          done
+          echo "Merged allure-results contents:";
+          ls -la ./allure-results || true
 
       - name: Generate Allure static site
         if: ${{ always() }}
-        continue-on-error: true
         run: |
           mkdir -p ./docs
           if [ -d ./allure-results ] && [ "$(ls -A ./allure-results 2>/dev/null)" ]; then
@@ -76,48 +132,17 @@ jobs:
           fi
           touch ./docs/.nojekyll
 
-      - name: Prepare updated visual snapshots
-        if: ${{ always() && inputs.update_snapshots == true && github.ref == 'refs/heads/main' }}
-        run: |
-          git config --global user.name "github-actions"
-          git config --global user.email "actions@github.com"
-          if ls tests/*-snapshots/*.png 1> /dev/null 2>&1; then
-            echo "Staging snapshot changes (adds/modifications/deletions) under tests/";
-            git add -A tests
-            git commit -m "chore: update visual snapshots" || echo "No snapshot changes"
-            git push https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git HEAD:${{ github.ref_name }}
-          else
-            echo "No snapshot files to commit"
-          fi
-
-      - name: Create PR with updated snapshots
-        if: ${{ always() && inputs.update_snapshots == true && github.ref == 'refs/heads/main' }}
-        uses: peter-evans/create-pull-request@v6
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update visual snapshots"
-          title: "chore: update visual snapshots"
-          body: Automated update of visual baseline images
-          branch: update/visual-snapshots
-          add-paths: |
-            tests/**/*-snapshots/*.png
-
       - name: Upload Pages artifact
         if: ${{ always() }}
         uses: actions/upload-pages-artifact@v3
         with:
           path: ./docs
 
-  deploy:
-    needs: test-and-build
-    if: ${{ always() && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/tests/dev') }}
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
-    steps:
       - name: Deploy to GitHub Pages
         id: deployment
+        if: ${{ always() }}
         uses: actions/deploy-pages@v4
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
