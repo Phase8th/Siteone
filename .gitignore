@@ -8,3 +8,4 @@ node_modules/
 /playwright/.cache/
 /allure-results/
 /allure-report/
+steps.txt

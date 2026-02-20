@@ -27,8 +27,8 @@ test('broken images detected via DOM properties', async ({ page }) => {
   const ok = statuses.filter((s) => s.complete && s.naturalWidth > 0);
 
   // Page is known to have broken images
-  expect(broken.length).toBeEqualTo(0);
-  // And at least one valid to ensure the selector works as expected
+  expect(broken.length).toBeGreaterThan(0);
+  // And at least one valid image to ensure selector/output is meaningful
   expect(ok.length).toBeGreaterThan(0);
 });
 
@@ -54,5 +54,5 @@ test('broken images detected via network responses', async ({ page }) => {
   expect(imageResponses.length).toBeGreaterThan(0);
 
   const failed = imageResponses.filter((r) => r.status >= 400);
-  expect(failed.length).toBeEqualTo(0);
+  expect(failed.length).toBeGreaterThan(0);
 });
