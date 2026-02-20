@@ -7,7 +7,7 @@ const url = 'https://the-internet.herokuapp.com/broken_images';
 // - This page intentionally contains broken images; we assert that at least one is broken
 //   and optionally that at least one is valid, to guard against false positives
 
-test('broken images detected via DOM properties', async ({ page }) => {
+test('@smoke broken images detected via DOM properties', async ({ page }) => {
   const response = await page.goto(url);
   expect(response?.status()).toBe(200);
 
@@ -35,7 +35,7 @@ test('broken images detected via DOM properties', async ({ page }) => {
 // Verify broken images by checking network responses
 // - Listen for image responses and assert that at least one returns 4xx/5xx
 
-test('broken images detected via network responses', async ({ page }) => {
+test('@regress broken images detected via network responses', async ({ page }) => {
   const imageResponses = [];
 
   page.on('response', (res) => {

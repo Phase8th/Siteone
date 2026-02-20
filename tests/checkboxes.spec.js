@@ -6,14 +6,14 @@ const url = 'https://the-internet.herokuapp.com/checkboxes';
 const checkbox = (page, index) => page.locator('#checkboxes input[type="checkbox"]').nth(index);
 
 test.describe('Checkboxes', () => {
-  test('HTTP status is 200 and page has expected headings', async ({ page }) => {
+  test('@regress HTTP status is 200 and page has expected headings', async ({ page }) => {
     const response = await page.goto(url);
     expect(response?.status()).toBe(200);
     await expect(page).toHaveTitle(/The Internet/);
     await expect(page.locator('h3')).toHaveText('Checkboxes');
   });
 
-  test('default states: first unchecked, second checked', async ({ page }) => {
+  test('@smoke default states: first unchecked, second checked', async ({ page }) => {
     await page.goto(url);
     const first = checkbox(page, 0);
     const second = checkbox(page, 1);
@@ -22,7 +22,7 @@ test.describe('Checkboxes', () => {
     await expect(second).toBeChecked();
   });
 
-  test('toggle via mouse clicks', async ({ page }) => {
+  test('@regress toggle via mouse clicks', async ({ page }) => {
     await page.goto(url);
     const first = checkbox(page, 0);
     const second = checkbox(page, 1);
@@ -42,7 +42,7 @@ test.describe('Checkboxes', () => {
     await expect(second).toBeChecked();
   });
 
-  test('toggle via keyboard (Space) when focused', async ({ page }) => {
+  test('@regress toggle via keyboard (Space) when focused', async ({ page }) => {
     await page.goto(url);
     const first = checkbox(page, 0);
 
@@ -54,7 +54,7 @@ test.describe('Checkboxes', () => {
     await expect(first).not.toBeChecked();
   });
 
-  test('bulk check and uncheck using API', async ({ page }) => {
+  test('@regress bulk check and uncheck using API', async ({ page }) => {
     await page.goto(url);
     const boxes = page.locator('#checkboxes input[type="checkbox"]');
 

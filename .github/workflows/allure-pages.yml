@@ -7,6 +7,14 @@ on:
       - tests/dev
   workflow_dispatch:
     inputs:
+      test_suite:
+        description: "Test suite to run"
+        type: choice
+        options:
+          - smoke
+          - regress
+        default: regress
+        required: true
       update_snapshots:
         description: "Update visual snapshots (toHaveScreenshot baselines)"
         type: boolean
@@ -36,6 +44,7 @@ jobs:
       matrix:
         browser: [chromium, firefox, webkit]
     env:
+      TEST_SUITE: ${{ github.event_name == 'push' && 'smoke' || inputs.test_suite || 'smoke' }}
       UPDATE_SNAPSHOTS: ${{ inputs.update_snapshots || 'false' }}
       RUN_VISUAL: ${{ inputs.run_visual || 'false' }}
     steps:
@@ -61,7 +70,13 @@ jobs:
             rm -rf tests/*-snapshots || true
             npx playwright test --project=${{ matrix.browser }} --grep @visual --update-snapshots --reporter=line;
           else
-            if [ "${RUN_VISUAL}" = "true" ]; then
+            if [ "${TEST_SUITE}" = "smoke" ]; then
+              echo "Running smoke tests for ${{ matrix.browser }}...";
+              npx playwright test --project=${{ matrix.browser }} --grep @smoke --grep-invert @visual;
+            elif [ "${TEST_SUITE}" = "regress" ]; then
+              echo "Running regression tests for ${{ matrix.browser }}...";
+              npx playwright test --project=${{ matrix.browser }} --grep @regress --grep-invert @visual;
+            elif [ "${RUN_VISUAL}" = "true" ]; then
               if [ "${{ matrix.browser }}" = "chromium" ]; then
                 echo "Running visual tests for chromium...";
                 npx playwright test --project=${{ matrix.browser }} --grep @visual;

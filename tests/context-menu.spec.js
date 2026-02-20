@@ -4,21 +4,21 @@ const url = 'https://the-internet.herokuapp.com/context_menu';
 const hotspot = (page) => page.locator('#hot-spot');
 
 test.describe('Context Menu', () => {
-  test('HTTP status is 200 and heading is correct', async ({ page }) => {
+  test('@smoke HTTP status is 200 and heading is correct', async ({ page }) => {
     const response = await page.goto(url);
     expect(response?.status()).toBe(200);
     await expect(page).toHaveTitle(/The Internet/);
     await expect(page.locator('h3')).toHaveText('Context Menu');
   });
 
-  test('page shows instructional text', async ({ page }) => {
+  test('@regress page shows instructional text', async ({ page }) => {
     await page.goto(url);
     const bodyText = await page.locator('body').innerText();
     await expect(bodyText).toContain('Right-click in the box below');
     await expect(bodyText).toContain('trigger a JavaScript alert');
   });
 
-  test('right-click on hotspot triggers JavaScript alert', async ({ page }) => {
+  test('@regress right-click on hotspot triggers JavaScript alert', async ({ page }) => {
     await page.goto(url);
 
     const dialogPromise = new Promise((resolve) => {
@@ -39,7 +39,7 @@ test.describe('Context Menu', () => {
     }).toBe('ok');
   });
 
-  test('left-click on hotspot does not trigger alert', async ({ page }) => {
+  test('@regress left-click on hotspot does not trigger alert', async ({ page }) => {
     await page.goto(url);
 
     const dialogPromise = page
